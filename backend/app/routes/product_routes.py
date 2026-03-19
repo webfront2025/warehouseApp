@@ -35,3 +35,36 @@ def add_product(product: dict):
     conn.commit()
 
     return {"message": "product added"}
+
+
+@router.put("/{product_id}")
+def update_product(product_id: int, product: dict):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "UPDATE products SET name = ?, category = ?, price = ?, quantity = ? WHERE id = ?",
+        (
+            product["name"],
+            product["category"],
+            product["price"],
+            product["quantity"],
+            product_id,
+        ),
+    )
+
+    conn.commit()
+
+    return {"message": "product updated"}
+
+
+@router.delete("/{product_id}")
+def delete_product(product_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM products WHERE id = ?", (product_id,))
+
+    conn.commit()
+
+    return {"message": "product deleted"}
