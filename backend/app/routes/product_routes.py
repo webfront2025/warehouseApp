@@ -1,3 +1,5 @@
+
+
 from fastapi import APIRouter
 from app.database.database import get_connection
 
@@ -15,7 +17,6 @@ def get_products():
 
     return [dict(p) for p in products]
 
-
 @router.post("/")
 def add_product(product: dict):
 
@@ -31,11 +32,8 @@ def add_product(product: dict):
             product["quantity"],
         ),
     )
-
     conn.commit()
-
     return {"message": "product added"}
-
 
 @router.put("/{product_id}")
 def update_product(product_id: int, product: dict):
