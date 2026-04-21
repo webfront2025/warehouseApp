@@ -4,7 +4,7 @@ import ProductTable from "../components/ProductTable";
 import AddProductForm from "../components/AddProductForm";
 import EditProductForm from "../components/EditProductForm";
 
-export default function Dashboard() {
+export default function Dashboard({ setIsLoggedIn }) {
   const [products, setProducts] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -37,6 +37,10 @@ export default function Dashboard() {
     }
   };
 
+  const handleLogout = () => {
+  localStorage.removeItem("token");
+  setIsLoggedIn(false);
+};
   const handleEditProduct = async (productData) => {
     try {
       await API.put(`/products/${editingProduct.id}`, productData);
@@ -89,7 +93,16 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <h1 className="text-2xl font-bold text-gray-900">StockFlow</h1>
-            <div className="text-sm text-gray-600">Logget ind - Produkter</div>
+            {/* <div className="text-sm text-gray-600">Logget ind - Produkter</div>  20-04-2026   */}
+            <div className="flex items-center gap-4">
+  <span className="text-sm text-gray-600">Logget ind</span>
+  <button
+    onClick={handleLogout}
+    className="bg-red-500 text-white px-3 py-1 rounded  hover:bg-red-600 transition"
+  >
+    Logout
+  </button>
+</div>
           </div>
         </div>
       </div>
@@ -99,7 +112,7 @@ export default function Dashboard() {
         <div className="mb-6 flex flex-col sm:flex-row gap-4">
           <button
             onClick={() => setShowAddForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200"
+            className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200"
           >
             Tilføj Produkt
           </button>
@@ -162,7 +175,7 @@ export default function Dashboard() {
         {/* Products Table */}
         <div className="bg-white rounded-lg shadow">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="min-w-[600px] w-full">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
@@ -204,7 +217,7 @@ export default function Dashboard() {
       {/* Add Product Modal */}
       {showAddForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md h-full sm:h-auto max-h-[90vh] flex flex-col">
             <div className="p-6 border-b border-gray-200 flex-shrink-0">
               <h2 className="text-xl font-bold text-gray-900">Tilføj Produkt</h2>
             </div>

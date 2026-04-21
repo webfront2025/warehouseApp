@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Dashboard from "./pages/Dashboard";
 import Login from "./components/Login";
 
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -12,7 +13,13 @@ function App() {
 
   return (
     <div className="App">
-      {isLoggedIn ? <Dashboard /> : <Login />}
+      {/* {isLoggedIn ? <Dashboard /> : <Login setIsLoggedIn={setIsLoggedIn} />}        20-04-2026    */}  
+       {isLoggedIn ? (
+        <Dashboard setIsLoggedIn={setIsLoggedIn} />
+      ) : (
+        <Login setIsLoggedIn={setIsLoggedIn} />
+      )}
+  
     </div>
   );
 }

@@ -122,7 +122,7 @@ export default function Login() {
             className="flex flex-wrap items-end gap-6"
           >
             <div className="flex-grow min-w-[200px]">
-              <label for="uname" className="block text-sm font-medium mb-1">
+              <label htmlFor="uname" className="block text-sm font-medium mb-1">
                 Username:
               </label>
               <input
@@ -134,7 +134,7 @@ export default function Login() {
               />
             </div>
             <div className="flex-grow min-w-[200px]">
-              <label for="password" className="block text-sm font-medium mb-1">
+              <label htmlFor="password" className="block text-sm font-medium mb-1">
                 Password:
               </label>
               <input
