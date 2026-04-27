@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Dashboard from "./pages/Dashboard";
 import Login from "./components/Login";
-
+import AIChat from "./components/AIChat";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -19,7 +19,7 @@ function App() {
       ) : (
         <Login setIsLoggedIn={setIsLoggedIn} />
       )}
-  
+      <AIChat />
     </div>
   );
 }

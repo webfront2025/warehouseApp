@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { API } from "../api/api";
-import ProductTable from "../components/ProductTable";
+//import ProductTable from "../components/ProductTable";
 import AddProductForm from "../components/AddProductForm";
 import EditProductForm from "../components/EditProductForm";
 
@@ -90,11 +90,11 @@ export default function Dashboard({ setIsLoggedIn }) {
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
       <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+          {/* <div className="flex justify-between items-center py-4"> */}
             <h1 className="text-2xl font-bold text-gray-900">StockFlow</h1>
             {/* <div className="text-sm text-gray-600">Logget ind - Produkter</div>  20-04-2026   */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-end gap-4">
   <span className="text-sm text-gray-600">Logget ind</span>
   <button
     onClick={handleLogout}
@@ -104,10 +104,10 @@ export default function Dashboard({ setIsLoggedIn }) {
   </button>
 </div>
           </div>
-        </div>
+      
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-8 pb-32">
         {/* Action Buttons */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4">
           <button
@@ -173,26 +173,26 @@ export default function Dashboard({ setIsLoggedIn }) {
         </div>
 
         {/* Products Table */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-[600px] w-full">
-              <thead className="bg-gray-50">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-gray-50 text-gray-500 uppercase">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Navn</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Antal</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pris</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Handlinger</th>
+                  <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Navn</th>
+                  <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Antal</th>
+                  <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pris</th>
+                  <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Handlinger</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredProducts.map((product) => (
                   <tr key={product.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.quantity}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">kr. {product.price}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{product.id}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{product.name}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{product.quantity}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">kr. {product.price}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                       <button 
                         onClick={() => openEditForm(product)}
                         className="text-green-600 hover:text-green-900 mr-3"
