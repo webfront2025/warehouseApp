@@ -12,7 +12,15 @@ from app.database.database import DB_PATH
 print("USING DB:", DB_PATH)
 
 def extract_product_name(question: str):
-    words = question.lower().split()
+    # words = question.lower().split()
+    
+    question = question.lower()
+
+    # remove ?, ! , . ,
+    question = re.sub(r"[^\wæøå\s]", "", question)
+
+    # words = question.split()
+    words = re.findall(r'\w+', question.lower())
 
     ignore = [
         "how", "many", "price", "what", "is",
@@ -57,9 +65,9 @@ def normalize_text(text):
     text = text.lower().strip()
 
     # normalize Danish characters
-    text = text.replace("ø", "æ")
-    text = text.replace("ö", "ø")
-    text = text.replace("oe", "ø")
+    # text = text.replace("ø", "æ")
+    # text = text.replace("ö", "ø")
+    # text = text.replace("oe", "ø")
     
     return text
 
@@ -120,14 +128,25 @@ SQL:
         return f"""
         SELECT name, quantity 
         FROM products 
-         WHERE LOWER(name) LIKE '%' || LOWER('{product_name}') || '%';
+         WHERE LOWER(name) LIKE '%' || LOWER('{product_name}') || '%'
+         ORDER BY CASE
+         WHEN LOWER(name)=LOWER('{product_name}') THEN 0
+         ELSE 1
+         END,
+         LENGTH(name);
         """
 
     else:
         return f"""
         SELECT name, quantity 
         FROM products 
-         WHERE LOWER(name) LIKE '%' || LOWER('{product_name}') || '%';
+        WHERE LOWER(name) LIKE '%' || LOWER('{product_name}') || '%'
+        ORDER BY
+        CASE
+            WHEN LOWER(name)=LOWER('{product_name}') THEN 0
+            ELSE 1
+        END,
+        LENGTH(name);
         """
         
 #  MAIN FUNCTION

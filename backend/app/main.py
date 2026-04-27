@@ -17,7 +17,8 @@ app.add_middleware(
 
 app.include_router(product_router)
 app.include_router(auth_router)
-app.include_router(ai_router, prefix="/api/ai")
+# app.include_router(ai_router, prefix="/api/ai")
+app.include_router(ai_router)
 
 @app.get("/")
 def root():

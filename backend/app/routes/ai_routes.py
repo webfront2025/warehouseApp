@@ -33,10 +33,11 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 import requests
+# from app.rag.search import search
 
 from app.ai.sql_agent import ask_database, extract_product_name
-from app.ai.tool_router import decide_tool
-from app.ai.tools import get_low_stock_products, get_all_products
+# from app.ai.tool_router import decide_tool
+# from app.ai.tools import get_low_stock_products, get_all_products
 
 router = APIRouter()
 
@@ -61,66 +62,86 @@ async def chat_with_ai(request: ChatRequest):
         product = extract_product_name(user_msg)
         if product:
             last_product = product
+            
+      #  if user did NOT mention product → reuse last one
         if not product and last_product:
             user_msg = f"{user_msg} {last_product}"
 
-        print(f"FINAL USER MSG: {user_msg}")
+        print("FINAL USER MSG:", user_msg)
+        print("LAST PRODUCT:", last_product)
 
-        # 3. Decide and execute tool
-        tool = decide_tool(user_msg)
-        print(f"TOOL DECISION: {tool}")
+        # -----------------------------
+        # STEP 3: query database
+        # -----------------------------
+        sql, db_result = ask_database(user_msg)
 
-        if "low_stock" in tool:
-            data = get_low_stock_products()
-        elif "all_products" in tool:
-            data = get_all_products()
-        else:
-            # Fallback to SQL agent
-            sql, data = ask_database(user_msg)
+        print("SQL:", sql)
+        print("DB RESULT:", db_result)
 
-        print(f"DATA FOUND: {data}")
-
-        # 4. Handle empty result
-        if not data:
+        # -----------------------------
+        # STEP 4: handle empty result
+        # -----------------------------
+        if not db_result or db_result == []:
             return {
-                "reply": "I'm sorry, I couldn't find that in the stock.",
+                "reply": "Not in stock",
                 "sql": sql,
-                "data": []
+                "data": db_result
             }
 
         # 5. Build AI response (Ollama)
-        prompt = f"""
-You are a warehouse assistant.
+#         prompt = f"""
+# You are a warehouse assistant.
 
-Database result:
-{data}
+# Database result:
+# {db_result}
 
-User question:
-{user_msg}
+# User question:
+# {user_msg}
 
-Rules:
-- Answer ONLY using the database result above
-- If price exists → show price
-- If quantity exists → show quantity
-- Be very short and clear
+# Rules:
+# - Answer ONLY using the database result above
+# - If price exists → show price
+# - If quantity exists → show quantity
+# - Be very short and clear
 
-Answer:
-"""
-        response = requests.post(
-            "http://localhost:11434/api/generate",
-            json={
-                "model": "llama3",
-                "prompt": prompt,
-                "stream": False
-            },
-            timeout=120  # Prevent hanging if Ollama is slow
-        )
+# Answer:
+# """
+#         response = requests.post(
+#             "http://localhost:11434/api/generate",
+#             json={
+#                 "model": "llama3",
+#                 "prompt": prompt,
+#                 "stream": False
+#             },
+#             timeout=10  # Prevent hanging if Ollama is slow
+#         )
         
-        result = response.json()
+#         result = response.json()
+#         return {
+#             "reply": result.get("response", "No response from AI"),
+#             "sql": sql,
+#             "data": db_result
+#         }
+
+# Simple smart reply without Ollama
+
+        first = db_result[0]
+        for row in db_result:
+            if row[0].lower() == last_product.lower():
+                 first = row
+            break
+
+        if "price" in user_msg:
+            reply = f"{first[0]} costs {first[1]} kr."
+        elif "how many" in user_msg or "quantity" in user_msg:
+            reply = f"We have {first[1]} units of {first[0]}."
+        else:
+            reply = f"Yes, we have {first[0]} in stock. Quantity: {first[1]}"
+
         return {
-            "reply": result.get("response", "No response from AI"),
+            "reply": reply,
             "sql": sql,
-            "data": data
+            "data": db_result
         }
 
     except Exception as e:
