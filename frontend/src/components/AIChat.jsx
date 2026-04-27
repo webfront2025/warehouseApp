@@ -1,20 +1,16 @@
 import { useState } from "react";
-
 export default function AIChat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(true); //  close function
   const [isMinimized, setIsMinimized] = useState(false);  // minimize function
-
-
   const sendMessage = async () => {
     if (!input.trim()) return;
     const currentInput = input;
     setMessages(prev => [...prev, { role: "user", content: currentInput }]);
     setInput("");
     setLoading(true);
-
     try {
       const res = await fetch("http://localhost:8000/api/ai/chat", {
         method: "POST",
@@ -29,16 +25,11 @@ export default function AIChat() {
       setLoading(false);
     }
   };
-
   if (!isOpen) return (
-    <button 
-      onClick={() => setIsOpen(true)}
-      className="fixed bottom-5 right-5 bg-blue-600 text-white p-3 rounded-full shadow-lg z-50"
-    >
-       Chat
-    </button>
+    <button onClick={() => setIsOpen(true)}
+      className="fixed bottom-5 right-5 bg-blue-600 text-white p-3 rounded-full shadow-lg z-50">
+       Chat</button>
   );
-
   return (
    <div className="fixed bottom-5 right-5 z-50 w-80 shadow-2xl border border-gray-300 rounded-lg overflow-hidden bg-white">
       {/* Header & Buttons */}
@@ -53,18 +44,17 @@ export default function AIChat() {
           </button>
         </div>
       </div>
-
       {!isMinimized && (
         <div className="flex flex-col">
           <div className="h-60 overflow-y-auto p-3 bg-gray-50">
             {/* ... map messages ... */}
           </div>
           <div className="p-2 border-t flex">
-            <input 
+            <input  value={input} 
+              onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
               className="flex-1 border p-1 text-sm rounded" 
-              placeholder="Enter message..." 
-            />
+              placeholder="Enter message..." />
             <button onClick={sendMessage} className="bg-blue-600 text-white px-3 py-1 rounded text-sm">Send</button>
           </div>
         </div>

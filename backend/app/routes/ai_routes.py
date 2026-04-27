@@ -35,102 +35,98 @@ from pydantic import BaseModel
 import requests
 
 from app.ai.sql_agent import ask_database, extract_product_name
+from app.ai.tool_router import decide_tool
+from app.ai.tools import get_low_stock_products, get_all_products
 
 router = APIRouter()
 
 # ✅ memory for last product
 last_product = None
 
-
 class ChatRequest(BaseModel):
     message: str
-
 
 @router.post("/api/ai/chat")
 async def chat_with_ai(request: ChatRequest):
     global last_product
-
+    # Initialize variables to avoid "undefined" errors
+    data = []
+    sql = None
+    
     try:
-        # -----------------------------
-        # STEP 1: get user message
-        # -----------------------------
+        # 1. Get user message
         user_msg = request.message.lower().strip()
 
-        # -----------------------------
-        # STEP 2: extract product
-        # -----------------------------
+        # 2. Extract and manage product memory
         product = extract_product_name(user_msg)
-
-        # ✅ if user mentioned product → save it
         if product:
             last_product = product
-
-        # ✅ if user did NOT mention product → reuse last one
         if not product and last_product:
             user_msg = f"{user_msg} {last_product}"
 
-        print("FINAL USER MSG:", user_msg)
-        print("LAST PRODUCT:", last_product)
+        print(f"FINAL USER MSG: {user_msg}")
 
-        # -----------------------------
-        # STEP 3: query database
-        # -----------------------------
-        sql, db_result = ask_database(user_msg)
+        # 3. Decide and execute tool
+        tool = decide_tool(user_msg)
+        print(f"TOOL DECISION: {tool}")
 
-        print("SQL:", sql)
-        print("DB RESULT:", db_result)
+        if "low_stock" in tool:
+            data = get_low_stock_products()
+        elif "all_products" in tool:
+            data = get_all_products()
+        else:
+            # Fallback to SQL agent
+            sql, data = ask_database(user_msg)
 
-        # -----------------------------
-        # STEP 4: handle empty result
-        # -----------------------------
-        if not db_result or db_result == []:
+        print(f"DATA FOUND: {data}")
+
+        # 4. Handle empty result
+        if not data:
             return {
-                "reply": "Not in stock",
+                "reply": "I'm sorry, I couldn't find that in the stock.",
                 "sql": sql,
-                "data": db_result
+                "data": []
             }
 
-        # -----------------------------
-        # STEP 5: build AI response
-        # -----------------------------
+        # 5. Build AI response (Ollama)
         prompt = f"""
 You are a warehouse assistant.
 
 Database result:
-{db_result}
+{data}
 
 User question:
 {user_msg}
 
 Rules:
-- Answer ONLY using database
+- Answer ONLY using the database result above
 - If price exists → show price
 - If quantity exists → show quantity
-- Be short and clear
+- Be very short and clear
 
 Answer:
 """
-
         response = requests.post(
             "http://localhost:11434/api/generate",
             json={
                 "model": "llama3",
                 "prompt": prompt,
                 "stream": False
-            }
+            },
+            timeout=120  # Prevent hanging if Ollama is slow
         )
-
+        
         result = response.json()
-
         return {
-            "reply": result.get("response", "No response"),
+            "reply": result.get("response", "No response from AI"),
             "sql": sql,
-            "data": db_result
+            "data": data
         }
 
     except Exception as e:
+        print(f"ERROR: {str(e)}")
         return {"error": str(e)}
-    
+
         # 2. Create the context string 
         #context = "Here is the current warehouse stock:\n"
        ## for p in products:

@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes.product_routes import router as product_router
 from app.routes.auth_routes import router as auth_router
+from app.routes.ai_routes import router as ai_router
 
 app = FastAPI()
 
@@ -16,6 +17,7 @@ app.add_middleware(
 
 app.include_router(product_router)
 app.include_router(auth_router)
+app.include_router(ai_router, prefix="/api/ai")
 
 @app.get("/")
 def root():
