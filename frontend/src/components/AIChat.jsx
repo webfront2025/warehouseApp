@@ -54,29 +54,20 @@ export default function AIChat() {
         </div>
       </div>
 
-{!isMinimized && (
-        <>
-          <div className="h-64 overflow-y-auto p-3 bg-gray-50 space-y-2">
-            {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <span className={`p-2 rounded-lg text-sm max-w-[85%] ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'}`}>
-                  {msg.content}
-                </span>
-              </div>
-            ))}
-            {loading && <div className="text-xs text-gray-400">Tænker...</div>}
+      {!isMinimized && (
+        <div className="flex flex-col">
+          <div className="h-60 overflow-y-auto p-3 bg-gray-50">
+            {/* ... map messages ... */}
           </div>
-          <div className="p-2 flex gap-1 border-t">
+          <div className="p-2 border-t flex">
             <input 
-              className="flex-1 p-2 text-sm border rounded" 
-              value={input} 
-              onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-              placeholder="Skriv her..."
+              className="flex-1 border p-1 text-sm rounded" 
+              placeholder="Enter message..." 
             />
             <button onClick={sendMessage} className="bg-blue-600 text-white px-3 py-1 rounded text-sm">Send</button>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
