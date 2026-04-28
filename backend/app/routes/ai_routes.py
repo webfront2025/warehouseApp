@@ -62,6 +62,32 @@ async def chat_with_ai(request: ChatRequest):
         if not product and last_product:
             user_msg = f"{user_msg} {last_product}"
 
+        # =========================
+        # SPECIAL: COMPARE PRODUCTS
+        # =========================
+        if "compare" in user_msg:
+            products_list = []
+            for word in user_msg.split():
+                _, result = ask_database(word)
+                if result:
+                    row = result[0]
+                    products_list.append(f"{row[0]} ({row[1]} pcs)")
+            if products_list:
+                return {
+                     "reply": "Comparison:\n• " + "\n• ".join(products_list)
+}
+
+        # =========================
+        # SPECIAL: IS LOW STOCK?
+        # =========================
+            if "low stock" in user_msg and product and "show" not in user_msg:            sql, data = ask_database(product)
+            if data:
+                qty = data[0][1]
+                if qty < 20:
+                    return {"reply": f"Yes, {product} is low stock ({qty} left)."}
+                else:
+                    return {"reply": f"No, {product} has {qty} units."}
+
         # 1. TOOL DECISION
         tool = decide_tool(user_msg)
 
@@ -80,7 +106,7 @@ async def chat_with_ai(request: ChatRequest):
         # 4. SMART PICK BEST MATCH
         first = data[0]
         try:
-            if last_product: # Safety check
+            if last_product:
                 for row in data:
                     if str(row[0]).lower() == last_product.lower():
                         first = row
@@ -89,14 +115,22 @@ async def chat_with_ai(request: ChatRequest):
             pass
 
         # 5. NORMALIZE DATA
-        # Ensure we don't crash depending on how many columns the SQL returned
         if len(first) == 2:
-            name, qty = first[0], first[1]
-            price = None
+            name = first[0]
+
+            if any(x in user_msg for x in ["price", "how much", "cost"]):
+                price = first[1]
+                qty = None
+            else:
+                qty = first[1]
+                price = None
+
         elif len(first) == 3:
             name, qty, price = first[0], first[1], first[2]
+
         elif len(first) >= 5:
             name, price, qty = first[1], first[3], first[4]
+
         else:
             name, qty, price = str(first[0]), "?", None
 
@@ -107,7 +141,7 @@ async def chat_with_ai(request: ChatRequest):
         elif tool == "all_products":
             lines = [f"{row[0]} - Qty:{row[1]}" for row in data]
             reply = "All products:\n" + "\n".join(lines)
-        elif "price" in user_msg:
+        elif any(x in user_msg for x in ["price", "how much", "cost"]):
             reply = f"{name} costs {price if price else 'unknown'} kr."
         elif "how many" in user_msg or "quantity" in user_msg:
             reply = f"We have {qty} units of {name}."

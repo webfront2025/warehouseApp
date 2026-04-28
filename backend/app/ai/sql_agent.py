@@ -23,16 +23,16 @@ def extract_product_name(question: str):
     words = re.findall(r'\w+', question.lower())
 
     ignore = [
-        "how", "many", "price", "what", "is",
-        "do", "you", "have", "much", "the",
-        "show", "low", "stock"
+       "how","many","price","what","is","do","you","have",
+        "much","the","show","low","stock","all","products",
+        "with","compare","and"
     ]
-
+    words = question.split()
     keywords = [w for w in words if w not in ignore]
     if "stock" in question and "low stock" in question:
         return None
     if keywords:
-        return keywords[-1]  # last meaningful word
+        return keywords[0]  # last meaningful word
 
     return None
 #  1. Clean SQL from LLM output
