@@ -24,11 +24,13 @@ def extract_product_name(question: str):
 
     ignore = [
         "how", "many", "price", "what", "is",
-        "do", "you", "have", "much", "the"
+        "do", "you", "have", "much", "the",
+        "show", "low", "stock"
     ]
 
     keywords = [w for w in words if w not in ignore]
-
+    if "stock" in question and "low stock" in question:
+        return None
     if keywords:
         return keywords[-1]  # last meaningful word
 
@@ -104,7 +106,7 @@ SQL:
                 "prompt": prompt,
                 "stream": False
             },
-            timeout=10
+            timeout=5
         )
 
         ai_sql = response.json().get("response", "")

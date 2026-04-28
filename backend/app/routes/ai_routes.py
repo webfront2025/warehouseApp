@@ -36,8 +36,8 @@ import requests
 # from app.rag.search import search
 
 from app.ai.sql_agent import ask_database, extract_product_name
-# from app.ai.tool_router import decide_tool
-# from app.ai.tools import get_low_stock_products, get_all_products
+from app.ai.tool_router import decide_tool
+from app.ai.tools import get_low_stock_products, get_all_products
 
 router = APIRouter()
 
@@ -50,103 +50,76 @@ class ChatRequest(BaseModel):
 @router.post("/api/ai/chat")
 async def chat_with_ai(request: ChatRequest):
     global last_product
-    # Initialize variables to avoid "undefined" errors
-    data = []
     sql = None
-    
-    try:
-        # 1. Get user message
-        user_msg = request.message.lower().strip()
+    data = []
 
-        # 2. Extract and manage product memory
+    try:
+        user_msg = request.message.lower().strip()
         product = extract_product_name(user_msg)
+
         if product:
             last_product = product
-            
-      #  if user did NOT mention product → reuse last one
         if not product and last_product:
             user_msg = f"{user_msg} {last_product}"
 
-        print("FINAL USER MSG:", user_msg)
-        print("LAST PRODUCT:", last_product)
+        # 1. TOOL DECISION
+        tool = decide_tool(user_msg)
 
-        # -----------------------------
-        # STEP 3: query database
-        # -----------------------------
-        sql, db_result = ask_database(user_msg)
-
-        print("SQL:", sql)
-        print("DB RESULT:", db_result)
-
-        # -----------------------------
-        # STEP 4: handle empty result
-        # -----------------------------
-        if not db_result or db_result == []:
-            return {
-                "reply": "Not in stock",
-                "sql": sql,
-                "data": db_result
-            }
-
-        # 5. Build AI response (Ollama)
-#         prompt = f"""
-# You are a warehouse assistant.
-
-# Database result:
-# {db_result}
-
-# User question:
-# {user_msg}
-
-# Rules:
-# - Answer ONLY using the database result above
-# - If price exists → show price
-# - If quantity exists → show quantity
-# - Be very short and clear
-
-# Answer:
-# """
-#         response = requests.post(
-#             "http://localhost:11434/api/generate",
-#             json={
-#                 "model": "llama3",
-#                 "prompt": prompt,
-#                 "stream": False
-#             },
-#             timeout=10  # Prevent hanging if Ollama is slow
-#         )
-        
-#         result = response.json()
-#         return {
-#             "reply": result.get("response", "No response from AI"),
-#             "sql": sql,
-#             "data": db_result
-#         }
-
-# Simple smart reply without Ollama
-
-        first = db_result[0]
-        for row in db_result:
-            if row[0].lower() == last_product.lower():
-                 first = row
-            break
-
-        if "price" in user_msg:
-            reply = f"{first[0]} costs {first[1]} kr."
-        elif "how many" in user_msg or "quantity" in user_msg:
-            reply = f"We have {first[1]} units of {first[0]}."
+        # 2. EXECUTE TOOL
+        if tool == "low_stock":
+            data = get_low_stock_products()
+        elif tool == "all_products":
+            data = get_all_products()
         else:
-            reply = f"Yes, we have {first[0]} in stock. Quantity: {first[1]}"
+            sql, data = ask_database(user_msg)
 
-        return {
-            "reply": reply,
-            "sql": sql,
-            "data": db_result
-        }
+        # 3. EMPTY RESULT
+        if not data:
+            return {"reply": "Not in stock", "sql": sql, "data": []}
+
+        # 4. SMART PICK BEST MATCH
+        first = data[0]
+        try:
+            if last_product: # Safety check
+                for row in data:
+                    if str(row[0]).lower() == last_product.lower():
+                        first = row
+                        break
+        except:
+            pass
+
+        # 5. NORMALIZE DATA
+        # Ensure we don't crash depending on how many columns the SQL returned
+        if len(first) == 2:
+            name, qty = first[0], first[1]
+            price = None
+        elif len(first) == 3:
+            name, qty, price = first[0], first[1], first[2]
+        elif len(first) >= 5:
+            name, price, qty = first[1], first[3], first[4]
+        else:
+            name, qty, price = str(first[0]), "?", None
+
+        # 6. RESPONSE RULES
+        if tool == "low_stock":
+            lines = [f"{row[0]} ({row[1]} left)" for row in data]
+            reply = "Low stock products:\n" + "\n".join(lines)
+        elif tool == "all_products":
+            lines = [f"{row[0]} - Qty:{row[1]}" for row in data]
+            reply = "All products:\n" + "\n".join(lines)
+        elif "price" in user_msg:
+            reply = f"{name} costs {price if price else 'unknown'} kr."
+        elif "how many" in user_msg or "quantity" in user_msg:
+            reply = f"We have {qty} units of {name}."
+        else:
+            reply = f"Yes, we have {name} in stock. Quantity: {qty}"
+
+        return {"reply": reply, "sql": sql, "data": data}
 
     except Exception as e:
-        print(f"ERROR: {str(e)}")
+        print("ERROR:", str(e))
         return {"error": str(e)}
+
 
         # 2. Create the context string 
         #context = "Here is the current warehouse stock:\n"

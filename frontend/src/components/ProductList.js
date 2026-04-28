@@ -6,7 +6,7 @@ function ProductList() {
 
   useEffect(() => {
     axios
-      .get("http://127.0.0.1:8000/products/")
+      .get("http://127.0.0.1:8000/products")
       .then((res) => setProducts(res.data));
   }, []);
 
